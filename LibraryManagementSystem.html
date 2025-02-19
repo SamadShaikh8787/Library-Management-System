@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .book-card {
+            transition: transform 0.2s;
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Library Management System</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Add Book Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Add New Book</h5>
+                <form id="addBookForm">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control mb-2" id="title" placeholder="Title" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control mb-2" id="author" placeholder="Author" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control mb-2" id="isbn" placeholder="ISBN" required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">Add Book</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-4">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search books...">
+        </div>
+
+        <!-- Books Table -->
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>ISBN</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="booksTable">
+                <!-- Books will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script>
+        // Book Array (using localStorage for persistence)
+        let books = JSON.parse(localStorage.getItem('books')) || [];
+
+        // Add Book
+        document.getElementById('addBookForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+            const isbn = document.getElementById('isbn').value;
+
+            if (title && author && isbn) {
+                const newBook = {
+                    id: Date.now(),
+                    title,
+                    author,
+                    isbn,
+                    status: 'Available'
+                };
+
+                books.push(newBook);
+                saveToLocalStorage();
+                renderBooks();
+                this.reset();
+            }
+        });
+
+        // Toggle Status
+        function toggleStatus(id) {
+            books = books.map(book => {
+                if (book.id === id) {
+                    book.status = book.status === 'Available' ? 'Borrowed' : 'Available';
+                }
+                return book;
+            });
+            saveToLocalStorage();
+            renderBooks();
+        }
+
+        // Delete Book
+        function deleteBook(id) {
+            books = books.filter(book => book.id !== id);
+            saveToLocalStorage();
+            renderBooks();
+        }
+
+        // Search Books
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const filteredBooks = books.filter(book => 
+                book.title.toLowerCase().includes(searchTerm) ||
+                book.author.toLowerCase().includes(searchTerm) ||
+                book.isbn.toLowerCase().includes(searchTerm)
+            );
+            renderBooks(filteredBooks);
+        });
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('books', JSON.stringify(books));
+        }
+
+        // Render Books
+        function renderBooks(booksArray = books) {
+            const tbody = document.getElementById('booksTable');
+            tbody.innerHTML = '';
+
+            booksArray.forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>${book.isbn}</td>
+                    <td>
+                        <span class="badge ${book.status === 'Available' ? 'bg-success' : 'bg-danger'}">
+                            ${book.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button onclick="toggleStatus(${book.id})" class="btn btn-sm btn-warning">
+                            Toggle Status
+                        </button>
+                        <button onclick="deleteBook(${book.id})" class="btn btn-sm btn-danger">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Initial render
+        renderBooks();
+    </script>
+</body>
+</html>
